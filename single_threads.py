@@ -22,13 +22,15 @@ def convert_image(file_name,idx):
     # creating image object 
     img = Image.open(file_name) 
     
+    # flip image 180 (data augmentation)
+    img1 = img.rotate(180)
     # using convert method for img1 to create a grayscale version
-    img1 = img.convert("L") 
+    img2 = img1.convert("L") 
     # using convert method for img2 to create a binary (black and white) version
-    img2 = img.convert("1") 
-    # img2.show() 
+    img3 = img2.convert("1") 
+     
     path = output_directory + "/image_" + str(idx) + ".jpg"
-    img2.save(path)
+    img3.save(path)
     return path
     
 # Function to complete second step in image process -- Resize image
@@ -114,13 +116,13 @@ def process_image(file_path, idx):
     
     
 def main():
-    count = 0
     start = time.perf_counter()
+    count = 0
     for filename in os.listdir(input_directory):
         f = os.path.join(input_directory, filename)
         # checking if it is a file
         if os.path.isfile(f):
-            print("On image:", count, f)
+            print("Processing image ", count, "...")
             path = convert_image(f, count)
             resize_image(path)
             image = segment_image(path)
@@ -133,18 +135,21 @@ def main():
     print("Total time to process without threads: ", total)
     print("Total CPU used without threads: ", total_cpu)
     
-    count = 0
+    thread_count = 0
     start = time.perf_counter()
     with concurrent.futures.ThreadPoolExecutor() as executor:
         futures = []
         for idx, file_path in enumerate(input_directory):
             futures.append(executor.submit(process_image, file_path, idx))
         concurrent.futures.wait(futures)
+        thread_count = thread_count + 1
+        
     end = time.perf_counter()
     total_time = end - start
     total_cpu = psutil.cpu_percent()
     print(f"Total time to process with multithreading: {total_time:.2f} seconds")
     print("Total CPU used without threads: ", total_cpu)
+    print("Threds used: ", thread_count)
         
 if __name__ == "__main__":
     main()
